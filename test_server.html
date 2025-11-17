@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест сервера FaceSort</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Тест сервера FaceSort</h1>
+    
+    <div class="test-section">
+        <h2>Проверка портов</h2>
+        <button onclick="checkPort(8000)">Проверить порт 8000</button>
+        <button onclick="checkPort(8002)">Проверить порт 8002</button>
+        <div id="port-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Тест API</h2>
+        <button onclick="testAPI()">Тест API</button>
+        <button onclick="testQueue()">Тест очереди</button>
+        <div id="api-log" class="log"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Тест общих папок</h2>
+        <button onclick="testCommonFolders()">Найти общие папки</button>
+        <div id="common-log" class="log"></div>
+    </div>
+
+    <script>
+        function log(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            element.appendChild(div);
+        }
+        
+        async function checkPort(port) {
+            log('port-log', `Проверяем порт ${port}...`, 'info');
+            try {
+                const response = await fetch(`http://localhost:${port}/api/tasks`, { 
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-store'
+                });
+                if (response.ok) {
+                    log('port-log', `✅ Порт ${port}: СЕРВЕР РАБОТАЕТ!`, 'success');
+                } else {
+                    log('port-log', `⚠️ Порт ${port}: Сервер отвечает с ошибкой ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log('port-log', `❌ Порт ${port}: Сервер недоступен - ${error.message}`, 'error');
+            }
+        }
+        
+        async function testAPI() {
+            log('api-log', 'Тестируем API...', 'info');
+            try {
+                const response = await fetch('http://localhost:8002/api/tasks', { cache: 'no-store' });
+                const data = await response.json();
+                log('api-log', `✅ API работает! Ответ: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log('api-log', `❌ Ошибка API: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testQueue() {
+            log('api-log', 'Тестируем очередь...', 'info');
+            try {
+                const response = await fetch('http://localhost:8002/api/queue', { cache: 'no-store' });
+                const data = await response.json();
+                log('api-log', `✅ Очередь: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log('api-log', `❌ Ошибка очереди: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testCommonFolders() {
+            log('common-log', 'Ищем общие папки...', 'info');
+            try {
+                const response = await fetch('http://localhost:8002/api/folder?path=/Users/artembutko/Desktop/116_Даша-2', { cache: 'no-store' });
+                const data = await response.json();
+                log('common-log', `✅ Папки: ${JSON.stringify(data)}`, 'success');
+            } catch (error) {
+                log('common-log', `❌ Ошибка поиска папок: ${error.message}`, 'error');
+            }
+        }
+        
+        // Автоматическая проверка при загрузке
+        window.onload = function() {
+            log('port-log', 'Автоматическая проверка портов...', 'info');
+            checkPort(8000);
+            checkPort(8002);
+        };
+    </script>
+</body>
+</html>
